@@ -498,9 +498,10 @@ body {
     }
 
     /* Boshqaruv paneli tugmalari to'liq sig'ishi va chapga-o'ngga silliq scroll bo'lishi uchun */
+   /* Boshqaruv paneli tugmalari telefonda mukammal bir qatorda, chapdan boshlanib sig'ishi uchun */
     .controls-bar {
-        padding: 6px 8px !important;
-        gap: 6px !important;
+        padding: 6px 10px !important;
+        gap: 8px !important;
         background: rgba(15, 23, 42, 0.98) !important;
         display: flex !important;
         overflow-x: auto !important;
@@ -516,10 +517,12 @@ body {
     }
 
     .control-btn {
-        padding: 6px 10px !important;
+        padding: 6px 12px !important;
         font-size: 11px !important;
         flex-shrink: 0 !important;
-        gap: 4px !important;
+        gap: 6px !important;
+        /* Mikrofon va boshqa tugmalar chapga surilib yo'qolib qolmasligi uchun */
+        min-width: max-content !important; 
     }
 
     .sidebar-col {
