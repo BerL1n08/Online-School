@@ -58,7 +58,15 @@ async function joinRoom() {
     document.getElementById("local-username-label").innerText = currentUsername + " (Siz)";
 
     try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Discord kabidek tiniq ovoz, aks sado (echo) va shovqinlarni tozalash sozlamalari
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            } 
+        });
         cameraStream = localStream;
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = localStream;
