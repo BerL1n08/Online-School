@@ -90,15 +90,32 @@ async function joinRoom() {
     document.getElementById("profile-name").innerText = currentUsername;
 
     try {
-        localStream = await navigator.mediaDevices.getUserMedia({
+        const rawStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: {
                 echoCancellation: true,      
                 noiseSuppression: false,     
-                autoGainControl: false       
+                autoGainControl: true       
             }
         });
- catch (error) {
+
+        // Ovozni kuchaytirish (GainNode) orqali noutbukdagi past ovozni balandlatamiz
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(rawStream);
+        const gainNode = audioCtx.createGain();
+        
+        gainNode.gain.value = 2.5; // Ovozni 2.5 barobar baland qiladi
+
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(gainNode);
+        gainNode.connect(destination);
+
+        const enhancedAudioTrack = destination.stream.getAudioTracks()[0];
+        const videoTrack = rawStream.getVideoTracks()[0];
+        
+        localStream = new MediaStream([videoTrack, enhancedAudioTrack]);
+
+    } catch (error) {
         console.error("Mikrofon yoki kameraga ruxsat berilmadi:", error);
         alert("Mikrofon yoki kameraga ruxsat berilmadi! Brauzer sozlamalarini tekshiring.");
         return;
