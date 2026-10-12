@@ -11,9 +11,9 @@ app.use(express.static(__dirname));
 io.on('connection', (socket) => {
     console.log('Foydalanuvchi ulandi:', socket.id);
 
-  // Xonaga qo'shilish
+    // Xonaga qo'shilish
     socket.on('join-room', (username, roomName) => {
-        socket.username = username; // <-- 1. Foydalanuvchi ismini socket ga yozib qo'yamiz
+        socket.username = username; // Foydalanuvchi ismini saqlaymiz
         socket.join(roomName);
         console.log(`${username} ${roomName} xonasiga kirdi`);
         
@@ -23,7 +23,6 @@ io.on('connection', (socket) => {
 
     // WebRTC Signalling (Offer, Answer, ICE Candidates)
     socket.on('offer', (data) => {
-        // <-- 2. Offer yuborishda username ni ham qo'shib yuboramiz
         io.to(data.target).emit('offer', { offer: data.offer, sender: socket.id, username: socket.username });
     });
 
@@ -47,7 +46,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`Server ishga tushdi: http://localhost:${PORT}`);
 });
