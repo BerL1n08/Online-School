@@ -16,7 +16,6 @@ const iceConfig = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-// Tema (Dark/Light)
 function toggleTheme() {
     const body = document.body;
     const themeIcon = document.getElementById("theme-icon");
@@ -24,7 +23,6 @@ function toggleTheme() {
     themeIcon.innerText = body.classList.contains("light-mode") ? "☀️" : "🌙";
 }
 
-// Sidebar tablarini almashtirish
 function switchTab(tabName) {
     const chatTab = document.getElementById("chat-tab");
     const participantsTab = document.getElementById("participants-tab");
@@ -58,7 +56,6 @@ async function joinRoom() {
     document.getElementById("local-username-label").innerText = currentUsername + " (Siz)";
 
     try {
-        // Avval ilg'or audio sozlamalar bilan urinib ko'ramiz
         localStream = await navigator.mediaDevices.getUserMedia({ 
             video: true, 
             audio: {
@@ -68,12 +65,11 @@ async function joinRoom() {
             } 
         });
     } catch (error1) {
-        console.warn("Ilg'or audio sozlamalar ishlamadi, oddiy rejimga o'tamiz:", error1);
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (error2) {
             console.error("Kamera yoki mikrofon topilmadi:", error2);
-            alert("Mikrofon yoki kameraga ruxsat berilmadi yoki ular ulanmagan!");
+            alert("Mikrofon yoki kameraga ruxsat berilmadi!");
         }
     }
 
@@ -92,7 +88,6 @@ async function joinRoom() {
     
     document.getElementById("placeholder").style.display = "none";
     addSystemMessage("Siz xonaga qo'shildingiz.");
-    updateParticipantsList();
 }
 
 function checkLoginEnter(event) {
@@ -101,12 +96,8 @@ function checkLoginEnter(event) {
     }
 }
 
-// Mikrofonni yoqish/o'chirish
 function toggleMic() {
-    if (!localStream) {
-        alert("Mikrofon topilmadi!");
-        return;
-    }
+    if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
     if (!audioTrack) return;
 
@@ -124,12 +115,8 @@ function toggleMic() {
     }
 }
 
-// Kamerani yoqish/o'chirish
 function toggleCam() {
-    if (!localStream) {
-        alert("Kamera topilmadi!");
-        return;
-    }
+    if (!localStream) return;
     const videoTrack = localStream.getVideoTracks()[0];
     if (!videoTrack) return;
 
@@ -147,7 +134,6 @@ function toggleCam() {
     }
 }
 
-// Ekran ulashni boshqarish
 function toggleScreenShare() {
     if (!isSharingScreen) {
         startScreenShare();
@@ -156,7 +142,6 @@ function toggleScreenShare() {
     }
 }
 
-// Ekran ulash funksiyasi (Telegram uslubida yaqinlashtirilgan)
 async function startScreenShare() {
     try {
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
@@ -164,7 +149,7 @@ async function startScreenShare() {
 
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = screenStream;
-        localVideo.classList.add("screen-share-video"); // Telegram kabi yaqin/gorizontal qilish uchun
+        localVideo.classList.add("screen-share-video");
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -182,13 +167,11 @@ async function startScreenShare() {
         screenTrack.onended = () => {
             stopScreenShare();
         };
-
     } catch (error) {
         console.error("Ekran ulashda xatolik:", error);
     }
 }
 
-// Ekran ulashni to'xtatish va kameraga qaytish
 function stopScreenShare() {
     if (screenStream) {
         screenStream.getTracks().forEach(track => track.stop());
@@ -199,7 +182,7 @@ function stopScreenShare() {
         const videoTrack = cameraStream.getVideoTracks()[0];
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = cameraStream;
-        localVideo.classList.remove("screen-share-video"); // Kameraga qaytgach holatni tiklaymiz
+        localVideo.classList.remove("screen-share-video");
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -216,39 +199,30 @@ function stopScreenShare() {
     addSystemMessage("Ekran ulash to'xtatildi.");
 }
 
-// Darsni yozib olish (Recording)
 async function toggleRecording() {
     const recBtn = document.getElementById("rec-btn");
 
     if (!isRecording) {
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ 
-                video: { mediaSource: "screen" },
-                audio: true 
-            });
-
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: "screen" }, audio: true });
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
 
             mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
+                if (event.data.size > 0) recordedChunks.push(event.data);
             };
 
             mediaRecorder.onstop = function() {
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
-                
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
                 a.download = `dars-yozuvi-${new Date().toISOString().slice(0,10)}.webm`;
                 document.body.appendChild(a);
                 a.click();
-                
                 window.URL.revokeObjectURL(url);
-                addSystemMessage("Dars yozuvi muvaffaqiyatli saqlandi va yuklab olindi!");
+                addSystemMessage("Dars yozuvi muvaffaqiyatli saqlandi!");
             };
 
             mediaRecorder.start();
@@ -258,14 +232,10 @@ async function toggleRecording() {
             addSystemMessage("Dars yozib olina boshlandi...");
 
             stream.getVideoTracks()[0].onended = function() {
-                if (isRecording) {
-                    toggleRecording();
-                }
+                if (isRecording) toggleRecording();
             };
-
         } catch (error) {
             console.error("Yozib olishda xatolik:", error);
-            alert("Ekran yozib olishga ruxsat berilmadi yoki xatolik yuz berdi.");
         }
     } else {
         mediaRecorder.stop();
@@ -275,7 +245,6 @@ async function toggleRecording() {
     }
 }
 
-// Ishtirokchilar ro'yxatini haqiqiy ismlar bilan yangilash
 function updateParticipantsList() {
     const listContainer = document.getElementById("participants-list");
     if (!listContainer) return;
@@ -299,52 +268,51 @@ function updateParticipantsList() {
     }
 }
 
-// Socket.io signallari va WebRTC
-socket.on('user-joined', async ({ id, username }) => {
-    addSystemMessage(`${username} xonaga qo'shildi.`);
-    
-    const pc = new RTCPeerConnection(iceConfig);
-    peers[id] = { pc: pc, username: username };
+// 1. Yangi odam kirganda xonadagi eski odamlar bilan ulanishni boshlaydi
+socket.on('all-users', async (users) => {
+    for (let user of users) {
+        const pc = createPeerConnection(user.id, user.username);
+        peers[user.id] = { pc: pc, username: user.username };
 
-    const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
-    if (activeStream) {
-        activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
-    }
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            socket.emit('ice-candidate', { target: id, candidate: event.candidate });
+        const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
+        if (activeStream) {
+            activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
         }
-    };
 
-    pc.ontrack = (event) => {
-        createRemoteVideoElement(id, username, event.streams[0]);
-    };
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('offer', { target: id, offer });
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { target: user.id, offer });
+    }
     updateParticipantsList();
 });
 
+// 2. Boshqalarga yangi odam qo'shilganda
+socket.on('user-joined', async ({ id, username }) => {
+    addSystemMessage(`${username} xonaga qo'shildi.`);
+    updateParticipantsList();
+});
+
+// 3. Offer kelganda javob berish (Answer)
 socket.on('offer', async ({ offer, sender, username }) => {
-    const pc = new RTCPeerConnection(iceConfig);
-    peers[sender] = { pc: pc, username: username || "Ishtirokchi" };
+    let pcObj = peers[sender];
+    let pc;
+
+    if (!pcObj) {
+        pc = createPeerConnection(sender, username);
+        peers[sender] = { pc: pc, username: username || "Ishtirokchi" };
+    } else {
+        pc = pcObj.pc;
+        pcObj.username = username || pcObj.username;
+    }
 
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
     if (activeStream) {
-        activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
-    }
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            socket.emit('ice-candidate', { target: sender, candidate: event.candidate });
+        // Tracklar allaqachon qo'shilmaganligiga amin bo'lish uchun
+        const senders = pc.getSenders();
+        if (senders.length === 0) {
+            activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
         }
-    };
-
-    pc.ontrack = (event) => {
-        createRemoteVideoElement(sender, username || "Ishtirokchi", event.streams[0]);
-    };
+    }
 
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await pc.createAnswer();
@@ -375,6 +343,22 @@ socket.on('user-disconnected', (id) => {
     updateParticipantsList();
 });
 
+function createPeerConnection(id, username) {
+    const pc = new RTCPeerConnection(iceConfig);
+
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            socket.emit('ice-candidate', { target: id, candidate: event.candidate });
+        }
+    };
+
+    pc.ontrack = (event) => {
+        createRemoteVideoElement(id, username, event.streams[0]);
+    };
+
+    return pc;
+}
+
 function createRemoteVideoElement(id, username, stream) {
     let videoBox = document.getElementById(`video-box-${id}`);
     if (!videoBox) {
@@ -386,8 +370,6 @@ function createRemoteVideoElement(id, username, stream) {
         video.autoplay = true;
         video.playsInline = true;
         video.srcObject = stream;
-        
-        // Boshqalardan kelayotgan videolarni ham Telegram kabi to'liq/yaqin ko'rsatish uchun
         video.classList.add("screen-share-video");
 
         const label = document.createElement("span");
@@ -404,7 +386,6 @@ function createRemoteVideoElement(id, username, stream) {
     }
 }
 
-// Chat funksiyalari
 function sendMessage() {
     const input = document.getElementById("chat-input");
     const text = input.value.trim();
@@ -429,7 +410,7 @@ function addSystemMessage(text) {
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("message");
     msgDiv.innerHTML = `<span>Tizim</span> ${text}`;
-    chatBox.appendChild(msgDiv);
+    chatBox.appendChild(msgBox = chatBox.appendChild(msgDiv));
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
