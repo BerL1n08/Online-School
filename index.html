@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Dars va Ekranni Ulash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Mavzuni almashtirish tugmasi -->
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Rejimni o'zgartirish">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <!-- 1. Kirish Ekrani -->
+    <div id="login-screen">
+        <div class="login-card fade-in">
+            <h2>Online Dars</h2>
+            <p>Virtual sinfxonaga xush kelibsiz</p>
+            <input type="text" id="username-input" placeholder="Ismingizni kiriting..." onkeypress="checkLoginEnter(event)">
+            <button class="btn" onclick="joinRoom()">Darsga kirish</button>
+        </div>
+    </div>
+
+    <!-- 2. Dars Xonasi Ekrani -->
+    <div id="room-screen">
+        <header>
+            <h1>Virtual Sinfxona</h1>
+            <span id="user-display">Foydalanuvchi: </span>
+        </header>
+
+        <div class="main-content">
+           <!-- Ekran va Videolar Grid Maydoni -->
+            <div class="video-container" id="video-grid">
+                <div class="placeholder-text" id="placeholder">
+                    <span>🖥️</span>
+                    Hozircha boshqa ishtirokchilar yo'q
+                </div>
+                <!-- O'z kameramiz / ekranimiz uchun video element -->
+                <div class="video-box">
+                    <video id="local-video" autoplay playsinline muted></video>
+                    <span class="video-username" id="local-username-label">Siz</span>
+                </div>
+            </div>
+            <!-- Sidebar (Chat va Ishtirokchilar) -->
+            <div class="sidebar">
+                <!-- Tab tugmalari -->
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active" onclick="switchTab('chat')">Chat</button>
+                    <button class="tab-btn" onclick="switchTab('participants')">Ishtirokchilar (<span id="participant-count">1</span>)</button>
+                </div>
+
+                <!-- Chat Bo'limi -->
+                <div class="tab-content" id="chat-tab">
+                    <div class="chat-box" id="chat-box">
+                        <div class="message"><span>Tizim</span> Xonaga xush kelibsiz!</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Xabar yozing..." onkeypress="checkChatEnter(event)">
+                        <button class="btn" onclick="sendMessage()">Yuborish</button>
+                    </div>
+                </div>
+
+                <!-- Ishtirokchilar Bo'limi -->
+                <div class="tab-content" id="participants-tab" style="display: none;">
+                    <div class="participants-list" id="participants-list">
+                        <!-- JavaScript orqali to'ldiriladi -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boshqaruv tugmalari -->
+<div class="controls-bar">
+    <button class="control-btn" id="mic-btn" onclick="toggleMic()">🎤 Mikrofon</button>
+    <button class="control-btn" id="cam-btn" onclick="toggleCam()">📷 Kamera</button>
+    <button class="control-btn" id="share-btn" onclick="toggleScreenShare()">🖥 Ekranni ulash</button>
+    <button class="control-btn" id="rec-btn" onclick="toggleRecording()">🔴 Yozib olish</button>
+    <button class="control-btn danger-btn" onclick="leaveRoom()">🚪 Chiqish</button>
+</div>      
+    <!-- Socket.io kutubxonasini ulash -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static(__dirname));
+
+io.on('connection', (socket) => {
+    console.log('Foydalanuvchi ulandi:', socket.id);
+
+    // Xonaga qo'shilish
+    socket.on('join-room', (username, roomName) => {
+        socket.join(roomName);
+        console.log(`${username} ${roomName} xonasiga kirdi`);
+        
+        // Xonadagi boshqa foydalanuvchilarga yangi kelganini aytish
+        socket.to(roomName).emit('user-joined', { id: socket.id, username });
+    });
+
+    // WebRTC Signalling (Offer, Answer, ICE Candidates)
+    socket.on('offer', (data) => {
+        io.to(data.target).emit('offer', { offer: data.offer, sender: socket.id });
+    });
+
+    socket.on('answer', (data) => {
+        io.to(data.target).emit('answer', { answer: data.answer, sender: socket.id });
+    });
+
+    socket.on('ice-candidate', (data) => {
+        io.to(data.target).emit('ice-candidate', { candidate: data.candidate, sender: socket.id });
+    });
+
+    // Chat xabarini tarqatish
+    socket.on('chat-message', (data) => {
+        io.to(data.room).emit('chat-message', data);
+    });
+
+    // Uzilish
+    socket.on('disconnect', () => {
+        console.log('Foydalanuvchi chiqib ketdi:', socket.id);
+        io.emit('user-disconnected', socket.id);
+    });
+});
+
+const PORT = 3001;
+server.listen(PORT, () => {
+    console.log(`Server ishga tushdi: http://localhost:${PORT}`);
+});
