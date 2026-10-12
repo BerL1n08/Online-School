@@ -365,6 +365,8 @@ function createRemoteVideoElement(id, username, stream) {
         video.autoplay = true;
         video.playsInline = true;
         video.srcObject = stream;
+        
+        // Agar kelayotgan oqim ekran ulash bo'lsa, uni to'g'ri moslaymiz
         video.classList.add("screen-share-video");
 
         const label = document.createElement("span");
@@ -373,9 +375,12 @@ function createRemoteVideoElement(id, username, stream) {
 
         videoBox.appendChild(video);
         videoBox.appendChild(label);
+        
+        // Hamma bitta joyga (video-grid ga) qo'shiladi
         document.getElementById("video-grid").appendChild(videoBox);
     } else {
-        videoBox.querySelector("video").srcObject = stream;
+        const video = videoBox.querySelector("video");
+        video.srcObject = stream;
         const label = videoBox.querySelector(".video-username");
         if (label) label.innerText = username || "Ishtirokchi";
     }
