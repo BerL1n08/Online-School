@@ -11,18 +11,20 @@ app.use(express.static(__dirname));
 io.on('connection', (socket) => {
     console.log('Foydalanuvchi ulandi:', socket.id);
 
-    // Xonaga qo'shilish
+  // Xonaga qo'shilish
     socket.on('join-room', (username, roomName) => {
+        socket.username = username; // <-- 1. Foydalanuvchi ismini socket ga yozib qo'yamiz
         socket.join(roomName);
         console.log(`${username} ${roomName} xonasiga kirdi`);
         
-        // Xonadagi boshqa foydalanuvchilarga yangi kelganini aytish
+        // Xonadagi boshqa foydalanuvchilarga yangi kelganini ismi bilan aytish
         socket.to(roomName).emit('user-joined', { id: socket.id, username });
     });
 
     // WebRTC Signalling (Offer, Answer, ICE Candidates)
     socket.on('offer', (data) => {
-        io.to(data.target).emit('offer', { offer: data.offer, sender: socket.id });
+        // <-- 2. Offer yuborishda username ni ham qo'shib yuboramiz
+        io.to(data.target).emit('offer', { offer: data.offer, sender: socket.id, username: socket.username });
     });
 
     socket.on('answer', (data) => {
