@@ -58,7 +58,7 @@ async function joinRoom() {
     document.getElementById("local-username-label").innerText = currentUsername + " (Siz)";
 
     try {
-        // Discord kabidek tiniq ovoz, aks sado (echo) va shovqinlarni tozalash sozlamalari
+        // Avval ilg'or audio sozlamalar bilan urinib ko'ramiz
         localStream = await navigator.mediaDevices.getUserMedia({ 
             video: true, 
             audio: {
@@ -67,11 +67,21 @@ async function joinRoom() {
                 autoGainControl: true
             } 
         });
-        cameraStream = localStream;
-        const localVideo = document.getElementById("local-video");
+    } catch (error1) {
+        console.warn("Ilg'or audio sozlamalar ishlamadi, oddiy rejimga o'tamiz:", error1);
+        try {
+            // Agar filtrlar xato bersa, oddiy standart mikrofon va kamera bilan ulaymiz
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (error2) {
+            console.error("Kamera yoki mikrofon topilmadi:", error2);
+            alert("Mikrofon yoki kameraga ruxsat berilmadi yoki ular ulanmagan!");
+        }
+    }
+
+    cameraStream = localStream;
+    const localVideo = document.getElementById("local-video");
+    if (localStream) {
         localVideo.srcObject = localStream;
-    } catch (error) {
-        console.warn("Kamera yoki mikrofon topilmadi:", error);
     }
 
     socket.emit('join-room', currentUsername, currentRoom);
@@ -137,7 +147,7 @@ function toggleCam() {
     }
 }
 
-// Ekran ulashni boshqarish (Tugma bosilganda ishlaydi)
+// Ekran ulashni boshqarish
 function toggleScreenShare() {
     if (!isSharingScreen) {
         startScreenShare();
@@ -149,13 +159,12 @@ function toggleScreenShare() {
 // Ekran ulash funksiyasi
 async function startScreenShare() {
     try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         const screenTrack = screenStream.getVideoTracks()[0];
 
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = screenStream;
 
-        // Barcha ulangan ishtirokchilarga ekran video oqimini yuborish
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
             if (sender) {
@@ -169,7 +178,6 @@ async function startScreenShare() {
         shareBtn.classList.add("active");
         addSystemMessage("Ekran ulash boshlandi.");
 
-        // Foydalanuvchi brauzerdagi "Stop sharing" tugmasini bossa
         screenTrack.onended = () => {
             stopScreenShare();
         };
@@ -294,9 +302,8 @@ socket.on('user-joined', async ({ id, username }) => {
     addSystemMessage(`${username} xonaga qo'shildi.`);
     
     const pc = new RTCPeerConnection(iceConfig);
-    peers[id] = { pc: pc, username: username }; // Ismni saqlab qo'yamiz
+    peers[id] = { pc: pc, username: username };
 
-    // Agar ekran ulashayotgan bo'lsa ekranni, aks holda kamerani uzatamiz
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
     if (activeStream) {
         activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
@@ -320,7 +327,7 @@ socket.on('user-joined', async ({ id, username }) => {
 
 socket.on('offer', async ({ offer, sender, username }) => {
     const pc = new RTCPeerConnection(iceConfig);
-    peers[sender] = { pc: pc, username: username || "Ishtirokchi" }; // Ismni qabul qilib saqlaymiz
+    peers[sender] = { pc: pc, username: username || "Ishtirokchi" };
 
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
     if (activeStream) {
