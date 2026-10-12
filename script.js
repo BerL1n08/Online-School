@@ -93,18 +93,18 @@ async function joinRoom() {
         const rawStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: {
-                echoCancellation: true,      
-                noiseSuppression: false,     
-                autoGainControl: true       
+                echoCancellation: true,      // Aks-sadoni yo'qotishni majburiy yoqamiz
+                noiseSuppression: true,     // Shovqinni tozalash
+                autoGainControl: true       // Avtomatik daromad
             }
         });
 
-        // Ovozni kuchaytirish (GainNode) orqali noutbukdagi past ovozni balandlatamiz
+        // Ovozni optimal darajada kuchaytirish (ekxo chiqmasligi uchun 1.8 qilib belgilandi)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioCtx.createMediaStreamSource(rawStream);
         const gainNode = audioCtx.createGain();
         
-        gainNode.gain.value = 2.5; // Ovozni 2.5 barobar baland qiladi
+        gainNode.gain.value = 1.8; 
 
         const destination = audioCtx.createMediaStreamDestination();
         source.connect(gainNode);
