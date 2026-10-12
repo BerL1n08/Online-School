@@ -98,7 +98,7 @@ async function joinRoom() {
                 autoGainControl: false       
             }
         });
-    } catch (error) {
+ catch (error) {
         console.error("Mikrofon yoki kameraga ruxsat berilmadi:", error);
         alert("Mikrofon yoki kameraga ruxsat berilmadi! Brauzer sozlamalarini tekshiring.");
         return;
