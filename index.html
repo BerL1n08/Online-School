@@ -3,83 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Dars va Ekranni Ulash</title>
+    <title>Virtual Sinfxona & Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome ikonkalari uchun -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- Mavzuni almashtirish tugmasi -->
-    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Rejimni o'zgartirish">
-        <span id="theme-icon">🌙</span>
-    </button>
-
-    <!-- 1. Kirish Ekrani -->
+    <!-- Kirish (Login) Oynasi -->
     <div id="login-screen">
         <div class="login-card fade-in">
-            <h2>Online Dars</h2>
-            <p>Virtual sinfxonaga xush kelibsiz</p>
-            <input type="text" id="username-input" placeholder="Ismingizni kiriting..." onkeypress="checkLoginEnter(event)">
-            <button class="btn" onclick="joinRoom()">Darsga kirish</button>
+            <div class="login-logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h2>Virtual Sinfga Xush Kelibsiz</h2>
+            <p>Muloqotga qo'shilish uchun ismingizni kiriting</p>
+            <input type="text" id="username-input" placeholder="Ismingiz (masalan: Anvar)..." onkeydown="checkLoginEnter(event)">
+            <button class="btn" onclick="joinRoom()">Xonaga Kirish</button>
         </div>
     </div>
 
-    <!-- 2. Dars Xonasi Ekrani -->
-    <div id="room-screen">
-        <header>
-            <h1>Virtual Sinfxona</h1>
-            <span id="user-display">Foydalanuvchi: </span>
-        </header>
-
-        <div class="main-content">
-           <!-- Ekran va Videolar Grid Maydoni -->
-            <div class="video-container" id="video-grid">
-                <div class="placeholder-text" id="placeholder">
-                    <span>🖥️</span>
-                    Hozircha boshqa ishtirokchilar yo'q
-                </div>
-                <!-- O'z kameramiz / ekranimiz uchun video element -->
-                <div class="video-box">
-                    <video id="local-video" autoplay playsinline muted></video>
-                    <span class="video-username" id="local-username-label">Siz</span>
-                </div>
+    <!-- Asosiy Dashboard / Dars Oynasi -->
+    <div id="room-screen" class="dashboard-container">
+        
+        <!-- 1. Chap tomonlama Navigatsiya Paneli (Sidebar Menu) -->
+        <aside class="left-nav">
+            <div class="brand-logo">LOGO</div>
+            <div class="nav-links">
+                <a href="#" class="nav-icon active" title="Asosiy"><i class="fa-solid fa-house"></i></a>
+                <a href="#" class="nav-icon" title="Ishtirokchilar"><i class="fa-solid fa-users"></i></a>
+                <a href="#" class="nav-icon" title="Chat"><i class="fa-solid fa-comment-dots"></i></a>
+                <a href="#" class="nav-icon" title="Materiallar"><i class="fa-solid fa-folder-open"></i></a>
+                <a href="#" class="nav-icon" title="Video"><i class="fa-solid fa-video"></i></a>
+                <a href="#" class="nav-icon" title="Sozlamalar"><i class="fa-solid fa-gear"></i></a>
             </div>
-            <!-- Sidebar (Chat va Ishtirokchilar) -->
-            <div class="sidebar">
-                <!-- Tab tugmalari -->
-                <div class="sidebar-tabs">
-                    <button class="tab-btn active" onclick="switchTab('chat')">Chat</button>
-                    <button class="tab-btn" onclick="switchTab('participants')">Ishtirokchilar (<span id="participant-count">1</span>)</button>
-                </div>
-
-                <!-- Chat Bo'limi -->
-                <div class="tab-content" id="chat-tab">
-                    <div class="chat-box" id="chat-box">
-                        <div class="message"><span>Tizim</span> Xonaga xush kelibsiz!</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chat-input" placeholder="Xabar yozing..." onkeypress="checkChatEnter(event)">
-                        <button class="btn" onclick="sendMessage()">Yuborish</button>
-                    </div>
-                </div>
-
-                <!-- Ishtirokchilar Bo'limi -->
-                <div class="tab-content" id="participants-tab" style="display: none;">
-                    <div class="participants-list" id="participants-list">
-                        <!-- JavaScript orqali to'ldiriladi -->
-                    </div>
-                </div>
+            <div class="user-profile-mini">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" alt="Avatar">
             </div>
-        </div>
+        </aside>
 
-        <!-- Boshqaruv tugmalari -->
-<div class="controls-bar">
-    <button class="control-btn" id="mic-btn" onclick="toggleMic()">🎤 Mikrofon</button>
-    <button class="control-btn" id="cam-btn" onclick="toggleCam()">📷 Kamera</button>
-    <button class="control-btn" id="share-btn" onclick="toggleScreenShare()">🖥 Ekranni ulash</button>
-    <button class="control-btn" id="rec-btn" onclick="toggleRecording()">🔴 Yozib olish</button>
-    <button class="control-btn danger-btn" onclick="leaveRoom()">🚪 Chiqish</button>
-</div>      
-    <!-- Socket.io kutubxonasini ulash -->
+        <!-- Asosiy Qism -->
+        <main class="main-workspace">
+            
+            <!-- Yuqori Qidiruv va Header -->
+            <header class="top-header">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Foydalanuvchi, dars yoki xabarlarni qidirish...">
+                </div>
+                <div class="header-right">
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-icon" title="Temani o'zgartirish">🌙</button>
+                    <div class="user-badge" id="user-display">Foydalanuvchi: Mehmon</div>
+                </div>
+            </header>
+
+            <!-- Markaziy Uch Ustunli Kontent -->
+            <div class="workspace-grid">
+                
+                <!-- 1-Ustun: Chat va Ishtirokchilar ro'yxati -->
+                <section class="panel-column chat-sidebar-col">
+                    <div class="sidebar-tabs">
+                        <button class="tab-btn active" onclick="switchTab('chat')">Chat</button>
+                        <button class="tab-btn" onclick="switchTab('participants')">Ishtirokchilar</button>
+                    </div>
+
+                    <!-- Chat Tab -->
+                    <div id="chat-tab" class="tab-content-area" style="display: flex;">
+                        <div class="search-contact">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Qidirish...">
+                        </div>
+                        <div class="chat-box" id="chat-box">
+                            <div class="message">
+                                <span>Tizim</span> Xush kelibsiz! Muloqotni boshlang.
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="Xabar yozing..." onkeydown="checkChatEnter(event)">
+                            <button class="btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Ishtirokchilar Tab -->
+                    <div id="participants-tab" class="tab-content-area" style="display: none;">
+                        <div class="participants-list" id="participants-list">
+                            <!-- Dinamik to'ldiriladi -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2-Ustun: Markaziy Video / Ekran Muloqot Oynasi -->
+                <section class="panel-column video-col">
+                    <div class="video-container" id="video-grid">
+                        <div class="placeholder-text" id="placeholder">
+                            <i class="fa-solid fa-video-slash" style="font-size: 40px; margin-bottom: 10px;"></i>
+                            Hozircha boshqa ishtirokchilar yo'q
+                        </div>
+                        <!-- O'zimizning video -->
+                        <div class="video-box" id="local-video-box">
+                            <video id="local-video" autoplay playsinline muted></video>
+                            <span class="video-username" id="local-username-label">Siz (Kamera)</span>
+                        </div>
+                    </div>
+
+                    <!-- Boshqaruv Paneli (Mic, Cam, Screen Share, Rotate, Exit) -->
+                    <div class="controls-bar">
+                        <button class="control-btn" id="mic-btn" onclick="toggleMic()"><i class="fa-solid fa-microphone"></i> Mikrofon</button>
+                        <button class="control-btn" id="cam-btn" onclick="toggleCam()"><i class="fa-solid fa-video"></i> Kamera</button>
+                        <button class="control-btn" id="share-btn" onclick="toggleScreenShare()"><i class="fa-solid fa-desktop"></i> Ekran</button>
+                        <button class="control-btn" onclick="rotateVideo()"><i class="fa-solid fa-rotate"></i> Aylantirish</button>
+                        <button class="control-btn" id="rec-btn" onclick="toggleRecording()"><i class="fa-solid fa-circle-dot" style="color:var(--danger)"></i> Yozib olish</button>
+                        <button class="control-btn danger-btn" onclick="leaveRoom()"><i class="fa-solid fa-right-from-bracket"></i> Chiqish</button>
+                    </div>
+                </section>
+
+                <!-- 3-Ustun: Profil va Ma'lumotlar Kartasi -->
+                <section class="panel-column profile-col">
+                    <div class="profile-card">
+                        <div class="profile-avatar-wrapper">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" alt="Profile">
+                        </div>
+                        <h3 id="profile-name-card">Ishtirokchi</h3>
+                        <p class="profile-role">Talaba / Fullstack Dasturchi</p>
+                        <div class="profile-location">
+                            <i class="fa-solid fa-location-dot"></i> Toshkent, O'zbekiston
+                        </div>
+                        <div class="social-icons">
+                            <a href="#"><i class="fa-brands fa-telegram"></i></a>
+                            <a href="#"><i class="fa-brands fa-github"></i></a>
+                            <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="info-details-box">
+                        <div class="info-row"><span>Telefon:</span> <b>+998 90 123 45 67</b></div>
+                        <div class="info-row"><span>Email:</span> <b>user@example.com</b></div>
+                        <div class="info-row"><span>Sana:</span> <b>01.01.2026</b></div>
+                    </div>
+
+                    <div class="media-files-box">
+                        <h4>Media Fayllar (28) <span style="float: right; color: var(--accent); cursor: pointer; font-size: 12px;">Barchasi</span></h4>
+                        <div class="media-grid-preview">
+                            <div class="media-thumb"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100" alt="Media"></div>
+                            <div class="media-thumb"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=100" alt="Media"></div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
