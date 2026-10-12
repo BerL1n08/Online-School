@@ -90,17 +90,14 @@ async function joinRoom() {
     document.getElementById("profile-name").innerText = currentUsername;
 
     try {
-        localStream = await navigator.mediaDevices.getUserMedia({ 
-            video: true, 
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
-        });
-    } catch (error1) {
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        } catch (error2) {
-            console.error("Kamera yoki mikrofon topilmadi:", error2);
-            alert("Mikrofon yoki kameraga ruxsat berilmadi!");
-        }
+       localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: {
+        echoCancellation: true,      // Eko (aks-sado) ni yo'qotish
+        noiseSuppression: false,     // Shovqinni avtomatik kesishni o'chiramiz (baland gapirganda uzilib qolmasligi uchun)
+        autoGainControl: false       // Avtomatik ovoz balandligini o'zgartirishni o'chiramiz
+    }
+});
     }
 
     cameraStream = localStream;
