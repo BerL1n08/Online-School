@@ -511,3 +511,8 @@ header h1::before {
     font-size: 12px;
     font-weight: 500;
 }
+/* Telegram uslubidagi ekran ulash oynasi (to'liq, gorizontal va yaqinlashgan holda) */
+.video-box video.screen-share-video {
+    object-fit: contain !important;
+    background-color: #0b0f19;
+}
