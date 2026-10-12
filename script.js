@@ -157,7 +157,7 @@ async function startScreenShare() {
 
         // Barcha ulangan ishtirokchilarga ekran video oqimini yuborish
         for (let id in peers) {
-            const sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
+            const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
             if (sender) {
                 sender.replaceTrack(screenTrack);
             }
@@ -192,7 +192,7 @@ function stopScreenShare() {
         localVideo.srcObject = cameraStream;
 
         for (let id in peers) {
-            const sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
+            const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
             if (sender && videoTrack) {
                 sender.replaceTrack(videoTrack);
             }
@@ -265,7 +265,7 @@ async function toggleRecording() {
     }
 }
 
-// Ishtirokchilar ro'yxatini yangilash
+// Ishtirokchilar ro'yxatini haqiqiy ismlar bilan yangilash
 function updateParticipantsList() {
     const listContainer = document.getElementById("participants-list");
     if (!listContainer) return;
@@ -278,10 +278,11 @@ function updateParticipantsList() {
     `;
 
     for (let id in peers) {
+        const participantName = peers[id].username || "Ishtirokchi";
         const item = document.createElement("div");
         item.classList.add("participant-item");
         item.innerHTML = `
-            <span class="participant-name">👤 Ishtirokchi</span>
+            <span class="participant-name">👤 ${participantName}</span>
             <span class="participant-status">Ulandi</span>
         `;
         listContainer.appendChild(item);
@@ -293,7 +294,7 @@ socket.on('user-joined', async ({ id, username }) => {
     addSystemMessage(`${username} xonaga qo'shildi.`);
     
     const pc = new RTCPeerConnection(iceConfig);
-    peers[id] = pc;
+    peers[id] = { pc: pc, username: username }; // Ismni saqlab qo'yamiz
 
     // Agar ekran ulashayotgan bo'lsa ekranni, aks holda kamerani uzatamiz
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
@@ -317,9 +318,9 @@ socket.on('user-joined', async ({ id, username }) => {
     updateParticipantsList();
 });
 
-socket.on('offer', async ({ offer, sender }) => {
+socket.on('offer', async ({ offer, sender, username }) => {
     const pc = new RTCPeerConnection(iceConfig);
-    peers[sender] = pc;
+    peers[sender] = { pc: pc, username: username || "Ishtirokchi" }; // Ismni qabul qilib saqlaymiz
 
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
     if (activeStream) {
@@ -333,7 +334,7 @@ socket.on('offer', async ({ offer, sender }) => {
     };
 
     pc.ontrack = (event) => {
-        createRemoteVideoElement(sender, "Ishtirokchi", event.streams[0]);
+        createRemoteVideoElement(sender, username || "Ishtirokchi", event.streams[0]);
     };
 
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -344,20 +345,20 @@ socket.on('offer', async ({ offer, sender }) => {
 });
 
 socket.on('answer', async ({ answer, sender }) => {
-    if (peers[sender]) {
-        await peers[sender].setRemoteDescription(new RTCSessionDescription(answer));
+    if (peers[sender] && peers[sender].pc) {
+        await peers[sender].pc.setRemoteDescription(new RTCSessionDescription(answer));
     }
 });
 
 socket.on('ice-candidate', async ({ candidate, sender }) => {
-    if (peers[sender]) {
-        await peers[sender].addIceCandidate(new RTCIceCandidate(candidate));
+    if (peers[sender] && peers[sender].pc) {
+        await peers[sender].pc.addIceCandidate(new RTCIceCandidate(candidate));
     }
 });
 
 socket.on('user-disconnected', (id) => {
     if (peers[id]) {
-        peers[id].close();
+        if (peers[id].pc) peers[id].pc.close();
         delete peers[id];
     }
     const videoBox = document.getElementById(`video-box-${id}`);
@@ -379,13 +380,15 @@ function createRemoteVideoElement(id, username, stream) {
 
         const label = document.createElement("span");
         label.classList.add("video-username");
-        label.innerText = username;
+        label.innerText = username || "Ishtirokchi";
 
         videoBox.appendChild(video);
         videoBox.appendChild(label);
         document.getElementById("video-grid").appendChild(videoBox);
     } else {
         videoBox.querySelector("video").srcObject = stream;
+        const label = videoBox.querySelector(".video-username");
+        if (label) label.innerText = username || "Ishtirokchi";
     }
 }
 
