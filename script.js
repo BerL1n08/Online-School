@@ -70,7 +70,6 @@ async function joinRoom() {
     } catch (error1) {
         console.warn("Ilg'or audio sozlamalar ishlamadi, oddiy rejimga o'tamiz:", error1);
         try {
-            // Agar filtrlar xato bersa, oddiy standart mikrofon va kamera bilan ulaymiz
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (error2) {
             console.error("Kamera yoki mikrofon topilmadi:", error2);
@@ -82,6 +81,7 @@ async function joinRoom() {
     const localVideo = document.getElementById("local-video");
     if (localStream) {
         localVideo.srcObject = localStream;
+        localVideo.classList.remove("screen-share-video");
     }
 
     socket.emit('join-room', currentUsername, currentRoom);
@@ -156,7 +156,7 @@ function toggleScreenShare() {
     }
 }
 
-// Ekran ulash funksiyasi
+// Ekran ulash funksiyasi (Telegram uslubida yaqinlashtirilgan)
 async function startScreenShare() {
     try {
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
@@ -164,6 +164,7 @@ async function startScreenShare() {
 
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = screenStream;
+        localVideo.classList.add("screen-share-video"); // Telegram kabi yaqin/gorizontal qilish uchun
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -198,6 +199,7 @@ function stopScreenShare() {
         const videoTrack = cameraStream.getVideoTracks()[0];
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = cameraStream;
+        localVideo.classList.remove("screen-share-video"); // Kameraga qaytgach holatni tiklaymiz
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -384,6 +386,9 @@ function createRemoteVideoElement(id, username, stream) {
         video.autoplay = true;
         video.playsInline = true;
         video.srcObject = stream;
+        
+        // Boshqalardan kelayotgan videolarni ham Telegram kabi to'liq/yaqin ko'rsatish uchun
+        video.classList.add("screen-share-video");
 
         const label = document.createElement("span");
         label.classList.add("video-username");
