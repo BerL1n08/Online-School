@@ -414,7 +414,6 @@ body {
     font-size: 11px;
 }
 
-/* MOBIL / TELEFONLAR UCHUN MAXSUS DIZAYN (Responsive) */
 @media (max-width: 768px) {
     body {
         overflow: hidden;
@@ -434,7 +433,6 @@ body {
         flex-direction: column;
     }
 
-    /* Asosiy gridni ustma-ust to'g'ri tartibda terib chiqamiz */
     .workspace-grid {
         display: flex !important;
         flex-direction: column !important;
@@ -446,37 +444,120 @@ body {
         padding-bottom: 20px;
     }
 
-    /* 1. ENG MUHIM: Video qismi har doim birinchi turadi */
+    /* Video qismini qat'iy chegaralaymiz va ustma-ust chiqishini oldini olamiz */
     .video-col {
         order: 1;
         width: 100%;
-        height: 320px !important;
-        min-height: 280px;
+        height: 260px !important;
+        min-height: 260px !important;
         flex-shrink: 0;
         background: var(--video-bg);
+        position: relative;
+        overflow: hidden;
     }
 
     .video-container {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px !important;
         padding: 10px !important;
-        gap: 8px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        height: 100% !important;
+        align-items: center;
     }
 
     .video-box {
-        max-height: 260px;
+        min-width: 200px !important;
+        height: 140px !important;
+        aspect-ratio: 16 / 9;
+        flex-shrink: 0;
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
     }
 
-    /* Boshruv tugmalarini telefonga moslab kichraytiramiz */
+    .video-box video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
     .controls-bar {
-        padding: 8px !important;
+        padding: 6px !important;
         gap: 6px !important;
         background: rgba(15, 23, 42, 0.98) !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
     }
 
     .control-btn {
-        padding: 6px 10px !important;
-        font-size: 11px !important;
+        padding: 5px 8px !important;
+        font-size: 10px !important;
+        white-space: nowrap;
     }
 
+    .sidebar-col {
+        order: 2;
+        width: 100%;
+        height: 300px !important;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        flex-shrink: 0;
+    }
+
+    .profile-col {
+        display: none !important;
+    }
+
+    .left-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100% !important;
+        height: 60px !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: center;
+        padding: 0 !important;
+        z-index: 1000;
+        background: var(--bg-sidebar);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .left-nav .brand-logo,
+    .left-nav .user-profile-mini {
+        display: none !important;
+    }
+
+    .nav-links {
+        flex-direction: row !important;
+        gap: 30px !important;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .nav-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .top-header {
+        height: 50px !important;
+        padding: 0 12px !important;
+    }
+
+    .header-title h3 {
+        font-size: 14px !important;
+    }
+
+    .user-badge {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+    }
+}
     /* 2. Chat va Ishtirokchilar qismi video ostida joylashadi */
     .sidebar-col {
         order: 2;
