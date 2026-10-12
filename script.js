@@ -7,6 +7,7 @@ let screenStream = null;
 let cameraStream = null;
 let isSharingScreen = false;
 let peers = {}; 
+let currentRotation = 0;
 
 let mediaRecorder;
 let recordedChunks = [];
@@ -16,13 +17,29 @@ const iceConfig = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
+// Tema (Dark/Light)
 function toggleTheme() {
     const body = document.body;
     const themeIcon = document.getElementById("theme-icon");
     body.classList.toggle("light-mode");
-    themeIcon.innerText = body.classList.contains("light-mode") ? "☀️" : "🌙";
+    if (body.classList.contains("light-mode")) {
+        themeIcon.innerText = "☀️";
+        localStorage.setItem("theme", "light");
+    } else {
+        themeIcon.innerText = "🌙";
+        localStorage.setItem("theme", "dark");
+    }
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light-mode");
+        const themeIcon = document.getElementById("theme-icon");
+        if (themeIcon) themeIcon.innerText = "☀️";
+    }
+});
+
+// Sidebar va Tablarni almashtirish
 function switchTab(tabName) {
     const chatTab = document.getElementById("chat-tab");
     const participantsTab = document.getElementById("participants-tab");
@@ -33,12 +50,28 @@ function switchTab(tabName) {
     if (tabName === 'chat') {
         chatTab.style.display = "flex";
         participantsTab.style.display = "none";
-        tabBtns[0].classList.add("active");
+        document.getElementById("btn-tab-chat")?.classList.add("active");
     } else {
         chatTab.style.display = "none";
         participantsTab.style.display = "flex";
-        tabBtns[1].classList.add("active");
+        document.getElementById("btn-tab-participants")?.classList.add("active");
         updateParticipantsList();
+    }
+}
+
+// Chap menyu ikonkalari
+function switchMainTab(menuType) {
+    document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
+    
+    if (menuType === 'home' || menuType === 'chat') {
+        document.getElementById('nav-home')?.classList.add('active');
+        switchTab('chat');
+    } else if (menuType === 'participants') {
+        document.getElementById('nav-users')?.classList.add('active');
+        switchTab('participants');
+    } else if (menuType === 'settings') {
+        document.getElementById('nav-settings')?.classList.add('active');
+        alert("Sozlamalar paneli tez orada ochiladi.");
     }
 }
 
@@ -54,15 +87,12 @@ async function joinRoom() {
     currentUsername = username;
     document.getElementById("user-display").innerText = "Foydalanuvchi: " + currentUsername;
     document.getElementById("local-username-label").innerText = currentUsername + " (Siz)";
+    document.getElementById("profile-name").innerText = currentUsername;
 
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ 
             video: true, 
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            } 
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
         });
     } catch (error1) {
         try {
@@ -91,11 +121,10 @@ async function joinRoom() {
 }
 
 function checkLoginEnter(event) {
-    if (event.key === "Enter") {
-        joinRoom();
-    }
+    if (event.key === "Enter") joinRoom();
 }
 
+// Mikrofonni boshqarish
 function toggleMic() {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
@@ -115,6 +144,7 @@ function toggleMic() {
     }
 }
 
+// Kamerani boshqarish
 function toggleCam() {
     if (!localStream) return;
     const videoTrack = localStream.getVideoTracks()[0];
@@ -134,12 +164,19 @@ function toggleCam() {
     }
 }
 
-function toggleScreenShare() {
-    if (!isSharingScreen) {
-        startScreenShare();
-    } else {
-        stopScreenShare();
+// Kamerani aylantirish (Rotate)
+function rotateVideo() {
+    currentRotation = (currentRotation + 90) % 360;
+    const localVideo = document.getElementById("local-video");
+    if (localVideo) {
+        localVideo.style.transform = `rotate(${currentRotation}deg)`;
     }
+    addSystemMessage(`Kamera ${currentRotation} gradusga aylantirildi.`);
+}
+
+function toggleScreenShare() {
+    if (!isSharingScreen) startScreenShare();
+    else stopScreenShare();
 }
 
 async function startScreenShare() {
@@ -153,9 +190,7 @@ async function startScreenShare() {
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender) {
-                sender.replaceTrack(screenTrack);
-            }
+            if (sender) sender.replaceTrack(screenTrack);
         }
 
         isSharingScreen = true;
@@ -164,9 +199,7 @@ async function startScreenShare() {
         shareBtn.classList.add("active");
         addSystemMessage("Ekran ulash boshlandi.");
 
-        screenTrack.onended = () => {
-            stopScreenShare();
-        };
+        screenTrack.onended = () => stopScreenShare();
     } catch (error) {
         console.error("Ekran ulashda xatolik:", error);
     }
@@ -186,9 +219,7 @@ function stopScreenShare() {
 
         for (let id in peers) {
             const sender = peers[id].pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender && videoTrack) {
-                sender.replaceTrack(videoTrack);
-            }
+            if (sender && videoTrack) sender.replaceTrack(videoTrack);
         }
     }
 
@@ -201,46 +232,36 @@ function stopScreenShare() {
 
 async function toggleRecording() {
     const recBtn = document.getElementById("rec-btn");
-
     if (!isRecording) {
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: "screen" }, audio: true });
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
 
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) recordedChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = function() {
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.style.display = 'none';
                 a.href = url;
                 a.download = `dars-yozuvi-${new Date().toISOString().slice(0,10)}.webm`;
-                document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
-                addSystemMessage("Dars yozuvi muvaffaqiyatli saqlandi!");
+                URL.revokeObjectURL(url);
+                addSystemMessage("Dars yozuvi saqlandi!");
             };
 
             mediaRecorder.start();
             isRecording = true;
             recBtn.innerText = "⏹ Yozuvni to'xtatish";
             recBtn.classList.add("active");
-            addSystemMessage("Dars yozib olina boshlandi...");
+            addSystemMessage("Yozib olish boshlandi...");
 
-            stream.getVideoTracks()[0].onended = function() {
-                if (isRecording) toggleRecording();
-            };
-        } catch (error) {
-            console.error("Yozib olishda xatolik:", error);
-        }
+            stream.getVideoTracks()[0].onended = () => { if (isRecording) toggleRecording(); };
+        } catch (err) { console.error(err); }
     } else {
         mediaRecorder.stop();
         isRecording = false;
-        recBtn.innerText = "🔴 Yozib olish";
+        recBtn.innerText = "🔴 Yozish";
         recBtn.classList.remove("active");
     }
 }
@@ -257,27 +278,22 @@ function updateParticipantsList() {
     `;
 
     for (let id in peers) {
-        const participantName = peers[id].username || "Ishtirokchi";
-        const item = document.createElement("div");
-        item.classList.add("participant-item");
-        item.innerHTML = `
-            <span class="participant-name">👤 ${participantName}</span>
-            <span class="participant-status">Ulandi</span>
+        const name = peers[id].username || "Ishtirokchi";
+        listContainer.innerHTML += `
+            <div class="participant-item">
+                <span class="participant-name">👤 ${name}</span>
+                <span class="participant-status">Ulandi</span>
+            </div>
         `;
-        listContainer.appendChild(item);
     }
 }
 
-// 1. Yangi odam kirganda xonadagi eski odamlar bilan ulanishni boshlaydi
 socket.on('all-users', async (users) => {
     for (let user of users) {
         const pc = createPeerConnection(user.id, user.username);
         peers[user.id] = { pc: pc, username: user.username };
-
         const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
-        if (activeStream) {
-            activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
-        }
+        if (activeStream) activeStream.getTracks().forEach(t => pc.addTrack(t, activeStream));
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -286,17 +302,14 @@ socket.on('all-users', async (users) => {
     updateParticipantsList();
 });
 
-// 2. Boshqalarga yangi odam qo'shilganda
 socket.on('user-joined', async ({ id, username }) => {
     addSystemMessage(`${username} xonaga qo'shildi.`);
     updateParticipantsList();
 });
 
-// 3. Offer kelganda javob berish (Answer)
 socket.on('offer', async ({ offer, sender, username }) => {
     let pcObj = peers[sender];
     let pc;
-
     if (!pcObj) {
         pc = createPeerConnection(sender, username);
         peers[sender] = { pc: pc, username: username || "Ishtirokchi" };
@@ -306,12 +319,8 @@ socket.on('offer', async ({ offer, sender, username }) => {
     }
 
     const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
-    if (activeStream) {
-        // Tracklar allaqachon qo'shilmaganligiga amin bo'lish uchun
-        const senders = pc.getSenders();
-        if (senders.length === 0) {
-            activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
-        }
+    if (activeStream && pc.getSenders().length === 0) {
+        activeStream.getTracks().forEach(t => pc.addTrack(t, activeStream));
     }
 
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -322,40 +331,26 @@ socket.on('offer', async ({ offer, sender, username }) => {
 });
 
 socket.on('answer', async ({ answer, sender }) => {
-    if (peers[sender] && peers[sender].pc) {
-        await peers[sender].pc.setRemoteDescription(new RTCSessionDescription(answer));
-    }
+    if (peers[sender]?.pc) await peers[sender].pc.setRemoteDescription(new RTCSessionDescription(answer));
 });
 
 socket.on('ice-candidate', async ({ candidate, sender }) => {
-    if (peers[sender] && peers[sender].pc) {
-        await peers[sender].pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
+    if (peers[sender]?.pc) await peers[sender].pc.addIceCandidate(new RTCIceCandidate(candidate));
 });
 
 socket.on('user-disconnected', (id) => {
     if (peers[id]) {
-        if (peers[id].pc) peers[id].pc.close();
+        peers[id].pc?.close();
         delete peers[id];
     }
-    const videoBox = document.getElementById(`video-box-${id}`);
-    if (videoBox) videoBox.remove();
+    document.getElementById(`video-box-${id}`)?.remove();
     updateParticipantsList();
 });
 
 function createPeerConnection(id, username) {
     const pc = new RTCPeerConnection(iceConfig);
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            socket.emit('ice-candidate', { target: id, candidate: event.candidate });
-        }
-    };
-
-    pc.ontrack = (event) => {
-        createRemoteVideoElement(id, username, event.streams[0]);
-    };
-
+    pc.onicecandidate = e => { if (e.candidate) socket.emit('ice-candidate', { target: id, candidate: e.candidate }); };
+    pc.ontrack = e => createRemoteVideoElement(id, username, e.streams[0]);
     return pc;
 }
 
@@ -390,32 +385,25 @@ function sendMessage() {
     const input = document.getElementById("chat-input");
     const text = input.value.trim();
     if (!text) return;
-
-    socket.emit('chat-message', {
-        room: currentRoom,
-        username: currentUsername,
-        text: text
-    });
+    socket.emit('chat-message', { room: currentRoom, username: currentUsername, text });
     input.value = "";
 }
 
-function checkChatEnter(event) {
-    if (event.key === "Enter") {
-        sendMessage();
-    }
-}
+function checkChatEnter(e) { if (e.key === "Enter") sendMessage(); }
 
 function addSystemMessage(text) {
     const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return;
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("message");
     msgDiv.innerHTML = `<span>Tizim</span> ${text}`;
-    chatBox.appendChild(msgBox = chatBox.appendChild(msgDiv));
+    chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 socket.on('chat-message', (data) => {
     const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return;
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("message");
     msgDiv.innerHTML = `<span>${data.username}</span> ${data.text}`;
@@ -424,14 +412,9 @@ socket.on('chat-message', (data) => {
 });
 
 function leaveRoom() {
-    const confirmed = confirm("Haqiqatan ham darsdan chiqmoqchimisiz?");
-    if (!confirmed) return;
-
-    if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-    }
+    if (!confirm("Haqiqatan ham darsdan chiqmoqchimisiz?")) return;
+    localStream?.getTracks().forEach(t => t.stop());
     stopScreenShare();
-
     document.getElementById("room-screen").style.display = "none";
     document.getElementById("login-screen").style.display = "flex";
     document.getElementById("username-input").value = "";
