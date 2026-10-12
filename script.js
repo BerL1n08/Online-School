@@ -4,6 +4,8 @@ let currentUsername = "";
 let currentRoom = "asosiy-xona";
 let localStream = null;
 let screenStream = null;
+let cameraStream = null;
+let isSharingScreen = false;
 let peers = {}; 
 
 let mediaRecorder;
@@ -57,6 +59,7 @@ async function joinRoom() {
 
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        cameraStream = localStream;
         const localVideo = document.getElementById("local-video");
         localVideo.srcObject = localStream;
     } catch (error) {
@@ -80,7 +83,7 @@ function checkLoginEnter(event) {
     }
 }
 
-// Telegram uslubidagi Mikrofonni yoqish/o'chirish
+// Mikrofonni yoqish/o'chirish
 function toggleMic() {
     if (!localStream) {
         alert("Mikrofon topilmadi!");
@@ -103,7 +106,7 @@ function toggleMic() {
     }
 }
 
-// Telegram uslubidagi Kamerani yoqish/o'chirish
+// Kamerani yoqish/o'chirish
 function toggleCam() {
     if (!localStream) {
         alert("Kamera topilmadi!");
@@ -126,25 +129,39 @@ function toggleCam() {
     }
 }
 
+// Ekran ulashni boshqarish (Tugma bosilganda ishlaydi)
+function toggleScreenShare() {
+    if (!isSharingScreen) {
+        startScreenShare();
+    } else {
+        stopScreenShare();
+    }
+}
+
 // Ekran ulash funksiyasi
-async function shareScreen() {
+async function startScreenShare() {
     try {
-        // Ekran streamini olish
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const screenTrack = screenStream.getVideoTracks()[0];
 
-        // O'zingizdagi video oynaga ekranni chiqarish
+        const localVideo = document.getElementById("local-video");
         localVideo.srcObject = screenStream;
 
-        // Barcha ulanib turgan ishtirokchilarga (Peers) kamera o'rniga ekran streamini yuborish
-        for (let peerId in peers) {
-            const sender = peers[peerId].getSenders().find(s => s.track.kind === 'video');
+        // Barcha ulangan ishtirokchilarga ekran video oqimini yuborish
+        for (let id in peers) {
+            const sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
             if (sender) {
                 sender.replaceTrack(screenTrack);
             }
         }
 
-        // Ekran ulash to'xtatilganda avtomatik kameraga qaytarish
+        isSharingScreen = true;
+        const shareBtn = document.getElementById("share-btn");
+        shareBtn.innerText = "⏹ Ekranni to'xtatish";
+        shareBtn.classList.add("active");
+        addSystemMessage("Ekran ulash boshlandi.");
+
+        // Foydalanuvchi brauzerdagi "Stop sharing" tugmasini bossa
         screenTrack.onended = () => {
             stopScreenShare();
         };
@@ -152,6 +169,33 @@ async function shareScreen() {
     } catch (error) {
         console.error("Ekran ulashda xatolik:", error);
     }
+}
+
+// Ekran ulashni to'xtatish va kameraga qaytish
+function stopScreenShare() {
+    if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        screenStream = null;
+    }
+
+    if (cameraStream) {
+        const videoTrack = cameraStream.getVideoTracks()[0];
+        const localVideo = document.getElementById("local-video");
+        localVideo.srcObject = cameraStream;
+
+        for (let id in peers) {
+            const sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender && videoTrack) {
+                sender.replaceTrack(videoTrack);
+            }
+        }
+    }
+
+    isSharingScreen = false;
+    const shareBtn = document.getElementById("share-btn");
+    shareBtn.innerText = "🖥 Ekranni ulash";
+    shareBtn.classList.remove("active");
+    addSystemMessage("Ekran ulash to'xtatildi.");
 }
 
 // Darsni yozib olish (Recording)
@@ -243,8 +287,10 @@ socket.on('user-joined', async ({ id, username }) => {
     const pc = new RTCPeerConnection(iceConfig);
     peers[id] = pc;
 
-    if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    // Agar ekran ulashayotgan bo'lsa ekranni, aks holda kamerani uzatamiz
+    const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
+    if (activeStream) {
+        activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
     }
 
     pc.onicecandidate = (event) => {
@@ -267,8 +313,9 @@ socket.on('offer', async ({ offer, sender }) => {
     const pc = new RTCPeerConnection(iceConfig);
     peers[sender] = pc;
 
-    if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    const activeStream = isSharingScreen && screenStream ? screenStream : localStream;
+    if (activeStream) {
+        activeStream.getTracks().forEach(track => pc.addTrack(track, activeStream));
     }
 
     pc.onicecandidate = (event) => {
