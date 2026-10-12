@@ -90,14 +90,18 @@ async function joinRoom() {
     document.getElementById("profile-name").innerText = currentUsername;
 
     try {
-       localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: {
-        echoCancellation: true,      // Eko (aks-sado) ni yo'qotish
-        noiseSuppression: false,     // Shovqinni avtomatik kesishni o'chiramiz (baland gapirganda uzilib qolmasligi uchun)
-        autoGainControl: false       // Avtomatik ovoz balandligini o'zgartirishni o'chiramiz
-    }
-});
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: {
+                echoCancellation: true,      
+                noiseSuppression: false,     
+                autoGainControl: false       
+            }
+        });
+    } catch (error) {
+        console.error("Mikrofon yoki kameraga ruxsat berilmadi:", error);
+        alert("Mikrofon yoki kameraga ruxsat berilmadi! Brauzer sozlamalarini tekshiring.");
+        return;
     }
 
     cameraStream = localStream;
@@ -363,7 +367,6 @@ function createRemoteVideoElement(id, username, stream) {
         video.playsInline = true;
         video.srcObject = stream;
         
-        // Agar kelayotgan oqim ekran ulash bo'lsa, uni to'g'ri moslaymiz
         video.classList.add("screen-share-video");
 
         const label = document.createElement("span");
@@ -373,7 +376,6 @@ function createRemoteVideoElement(id, username, stream) {
         videoBox.appendChild(video);
         videoBox.appendChild(label);
         
-        // Hamma bitta joyga (video-grid ga) qo'shiladi
         document.getElementById("video-grid").appendChild(videoBox);
     } else {
         const video = videoBox.querySelector("video");
