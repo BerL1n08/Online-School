@@ -126,44 +126,32 @@ function toggleCam() {
     }
 }
 
-// Ekranni ulash
-async function toggleScreenShare() {
-    const shareBtn = document.getElementById("share-btn");
+// Ekran ulash funksiyasi
+async function shareScreen() {
+    try {
+        // Ekran streamini olish
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenTrack = screenStream.getVideoTracks()[0];
 
-    if (!screenStream) {
-        try {
-            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            
-            const localVideo = document.getElementById("local-video");
-            localVideo.srcObject = screenStream;
-            shareBtn.innerText = "⏹ Ekranni to'xtatish";
-            shareBtn.classList.add("active");
+        // O'zingizdagi video oynaga ekranni chiqarish
+        localVideo.srcObject = screenStream;
 
-            screenStream.getVideoTracks()[0].onended = function() {
-                stopScreenShare();
-            };
-        } catch (error) {
-            console.error("Ekranni ulash xatoligi:", error);
+        // Barcha ulanib turgan ishtirokchilarga (Peers) kamera o'rniga ekran streamini yuborish
+        for (let peerId in peers) {
+            const sender = peers[peerId].getSenders().find(s => s.track.kind === 'video');
+            if (sender) {
+                sender.replaceTrack(screenTrack);
+            }
         }
-    } else {
-        stopScreenShare();
-    }
-}
 
-function stopScreenShare() {
-    if (screenStream) {
-        screenStream.getTracks().forEach(track => track.stop());
-        screenStream = null;
-    }
+        // Ekran ulash to'xtatilganda avtomatik kameraga qaytarish
+        screenTrack.onended = () => {
+            stopScreenShare();
+        };
 
-    const localVideo = document.getElementById("local-video");
-    if (localStream) {
-        localVideo.srcObject = localStream;
+    } catch (error) {
+        console.error("Ekran ulashda xatolik:", error);
     }
-
-    const shareBtn = document.getElementById("share-btn");
-    shareBtn.innerText = "🖥 Ekranni ulash";
-    shareBtn.classList.remove("active");
 }
 
 // Darsni yozib olish (Recording)
