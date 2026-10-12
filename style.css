@@ -414,6 +414,7 @@ body {
     font-size: 11px;
 }
 
+/* MOBIL / TELEFONLAR UCHUN MAXSUS DIZAYN (Responsive) */
 @media (max-width: 768px) {
     body {
         overflow: hidden;
@@ -433,6 +434,7 @@ body {
         flex-direction: column;
     }
 
+    /* Asosiy gridni ustma-ust to'g'ri tartibda terib chiqamiz */
     .workspace-grid {
         display: flex !important;
         flex-direction: column !important;
@@ -444,73 +446,57 @@ body {
         padding-bottom: 20px;
     }
 
-    /* Video qismini qat'iy chegaralaymiz va ustma-ust chiqishini oldini olamiz */
+    /* 1. ENG MUHIM: Video qismi har doim birinchi turadi */
     .video-col {
         order: 1;
         width: 100%;
-        height: 260px !important;
-        min-height: 260px !important;
+        height: 320px !important;
+        min-height: 280px;
         flex-shrink: 0;
         background: var(--video-bg);
-        position: relative;
-        overflow: hidden;
     }
 
     .video-container {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 10px !important;
         padding: 10px !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        height: 100% !important;
-        align-items: center;
+        gap: 8px !important;
     }
 
     .video-box {
-        min-width: 200px !important;
-        height: 140px !important;
-        aspect-ratio: 16 / 9;
-        flex-shrink: 0;
-        position: relative;
-        background: #000;
-        border-radius: 8px;
-        overflow: hidden;
+        max-height: 260px;
     }
 
-    .video-box video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
+    /* Boshruv tugmalarini telefonga moslab kichraytiramiz */
     .controls-bar {
-        padding: 6px !important;
+        padding: 8px !important;
         gap: 6px !important;
         background: rgba(15, 23, 42, 0.98) !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto;
     }
 
     .control-btn {
-        padding: 5px 8px !important;
-        font-size: 10px !important;
-        white-space: nowrap;
+        padding: 6px 10px !important;
+        font-size: 11px !important;
     }
 
+    /* 2. Chat va Ishtirokchilar qismi video ostida joylashadi */
     .sidebar-col {
         order: 2;
         width: 100%;
-        height: 300px !important;
+        height: 280px !important;
         border-top: 1px solid var(--border-color);
         background: var(--bg-secondary);
         flex-shrink: 0;
     }
 
+    .chat-box {
+        padding: 8px !important;
+    }
+
+    /* Ortcha profil panelini telefonda yashiramiz (joy egallamasligi uchun) */
     .profile-col {
         display: none !important;
     }
 
+    /* 3. Pastki Navigatsiya Paneli (Bottom Bar) */
     .left-nav {
         position: fixed;
         bottom: 0;
@@ -524,6 +510,7 @@ body {
         z-index: 1000;
         background: var(--bg-sidebar);
         border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15);
     }
 
     .left-nav .brand-logo,
@@ -544,6 +531,7 @@ body {
         font-size: 18px;
     }
 
+    /* Yuqori Header qismini ixchamlashtiramiz */
     .top-header {
         height: 50px !important;
         padding: 0 12px !important;
